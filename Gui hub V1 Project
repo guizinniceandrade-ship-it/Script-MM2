@@ -1,0 +1,190 @@
+-- ===================================
+--        MM2 BRASIL BETA 🗡️
+--    SCRIPT COMPLETO COM AUTO FARM
+-- ===================================
+
+local Players = game:GetService("Players")
+local UIS = game:GetService("UserInputService")
+local RunService = game:GetService("RunService")
+local lp = Players.LocalPlayer
+
+-- Limpeza de UI antiga
+if game.CoreGui:FindFirstChild("PainelDeltaV3") then
+    game.CoreGui.PainelDeltaV3:Destroy()
+end
+
+local screenGui = Instance.new("ScreenGui")
+screenGui.Name = "PainelDeltaV3"
+screenGui.Parent = game.CoreGui
+screenGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
+
+local states = {
+    noclip = false,
+    esp = false,
+    infJump = false,
+    speed = false,
+    autoFarm = false
+}
+local distAura = 15
+
+-- ✅ Função só para deixar bonito, NÃO MEXE NO FUNCIONAMENTO
+local function round(obj, radius)
+    local c = Instance.new("UICorner")
+    c.CornerRadius = UDim.new(0, radius)
+    c.Parent = obj
+end
+
+-- 🎨 JANELA PRINCIPAL - Visual melhorado, tamanho e função IGUAIS AO SEU
+local main = Instance.new("Frame")
+main.Size = UDim2.new(0, 220, 0, 300)
+main.Position = UDim2.new(0.5, -110, 0.5, -150)
+main.BackgroundColor3 = Color3.fromRGB(15, 15, 15) -- Fica mais escuro e bonito
+main.BackgroundTransparency = 0.1 -- Quase transparente como você gosta
+main.Draggable = true 
+main.Active = true
+main.Parent = screenGui
+round(main, 12) -- Bordas arredondadas
+
+-- 🎛️ BOTÃO DE ABRIR E FECHAR - Mesma função, só cor e aparência
+local toggleBtn = Instance.new("TextButton")
+toggleBtn.Size = UDim2.new(0, 80, 0, 30)
+toggleBtn.Position = UDim2.new(0, 10, 0, 10)
+toggleBtn.Text = "Fechar"
+toggleBtn.BackgroundColor3 = Color3.fromRGB(160, 30, 30) -- Vermelho mais bonito
+toggleBtn.TextColor3 = Color3.new(1, 1, 1)
+toggleBtn.Font = Enum.Font.GothamBold
+toggleBtn.TextSize = 13
+toggleBtn.AutoButtonColor = false
+toggleBtn.Parent = screenGui
+round(toggleBtn, 8)
+
+-- ✅ ESSA FUNÇÃO É EXATAMENTE A SUA, NÃO ALTEREI NADA
+toggleBtn.MouseButton1Click:Connect(function()
+    main.Visible = not main.Visible
+    toggleBtn.Text = main.Visible and "Fechar" or "Abrir"
+    toggleBtn.BackgroundColor3 = main.Visible and Color3.fromRGB(160, 30, 30) or Color3.fromRGB(30, 160, 30)
+end)
+
+-- ✅ ORGANIZAÇÃO DOS BOTÕES - IGUAL AO SEU
+local list = Instance.new("UIListLayout")
+list.Parent = main
+list.Padding = UDim.new(0, 7)
+list.HorizontalAlignment = Enum.HorizontalAlignment.Center
+list.VerticalAlignment = Enum.VerticalAlignment.Center
+
+-- ✅ FUNÇÃO DE CRIAR BOTÃO - Mesma lógica, só cores e bordas melhoradas
+local function createToggle(text, callback)
+    local btn = Instance.new("TextButton")
+    btn.Size = UDim2.new(0, 190, 0, 35)
+    btn.Text = text
+    btn.BackgroundColor3 = Color3.fromRGB(35, 35, 35) -- Cinza mais bonito
+    btn.TextColor3 = Color3.new(1, 1, 1)
+    btn.Font = Enum.Font.GothamSemibold
+    btn.TextSize = 14
+    btn.AutoButtonColor = false
+    btn.Parent = main
+    round(btn, 6) -- Bordas arredondadas
+    btn.MouseButton1Click:Connect(function() callback(btn) end)
+    return btn
+end
+
+-- ===================================
+-- ✅ TODAS AS FUNÇÕES ABAIXO SÃO EXATAMENTE AS SUAS
+-- Não mudei NENHUMA linha, só ajustei a cor do botão para ficar mais bonito
+-- ===================================
+
+-- 1. ESP Auto-Update
+createToggle("ESP: OFF", function(btn)
+    states.esp = not states.esp
+    btn.Text = states.esp and "ESP: ON" or "ESP: OFF"
+    btn.BackgroundColor3 = states.esp and Color3.fromRGB(25, 120, 25) or Color3.fromRGB(35, 35, 35)
+    if not states.esp then
+        for _, p in pairs(Players:GetPlayers()) do
+            if p.Character and p.Character:FindFirstChild("Highlight") then p.Character.Highlight:Destroy() end
+        end
+    end
+end)
+
+-- 2. Noclip
+createToggle("Noclip: OFF", function(btn)
+    states.noclip = not states.noclip
+    btn.Text = states.noclip and "Noclip: ON" or "Noclip: OFF"
+    btn.BackgroundColor3 = states.noclip and Color3.fromRGB(25, 120, 25) or Color3.fromRGB(35, 35, 35)
+end)
+
+-- 3. Speed
+createToggle("Speed: OFF", function(btn)
+    states.speed = not states.speed
+    btn.Text = states.speed and "Speed: ON" or "Speed: OFF"
+    btn.BackgroundColor3 = states.speed and Color3.fromRGB(25, 120, 25) or Color3.fromRGB(35, 35, 35)
+end)
+
+-- 4. Pulo Infinito
+createToggle("Inf Jump: OFF", function(btn)
+    states.infJump = not states.infJump
+    btn.Text = states.infJump and "Inf Jump: ON" or "Inf Jump: OFF"
+    btn.BackgroundColor3 = states.infJump and Color3.fromRGB(25, 120, 25) or Color3.fromRGB(35, 35, 35)
+end)
+
+-- 5. AUTO FARM MOEDAS
+createToggle("Auto Farm: OFF", function(btn)
+    states.autoFarm = not states.autoFarm
+    btn.Text = states.autoFarm and "Auto Farm: ON" or "Auto Farm: OFF"
+    btn.BackgroundColor3 = states.autoFarm and Color3.fromRGB(25, 120, 25) or Color3.fromRGB(35, 35, 35)
+end)
+
+-- ✅ LOOP PRINCIPAL EXATAMENTE O SEU
+task.spawn(function()
+    while task.wait(0.5) do
+        -- Lógica ESP
+        if states.esp then
+            for _, p in pairs(Players:GetPlayers()) do
+                if p ~= lp and p.Character then
+                    local h = p.Character:FindFirstChild("Highlight") or Instance.new("Highlight", p.Character)
+                    local isM = p.Backpack:FindFirstChild("Knife") or p.Character:FindFirstChild("Knife")
+                    local isS = p.Backpack:FindFirstChild("Gun") or p.Character:FindFirstChild("Gun")
+                    h.FillColor = isM and Color3.new(1,0,0) or (isS and Color3.new(0,0,1) or Color3.new(0,1,0))
+                end
+            end
+        end
+
+        -- Lógica Auto Farm (Procura moedas no mapa)
+        if states.autoFarm and lp.Character and lp.Character:FindFirstChild("HumanoidRootPart") then
+            for _, v in pairs(game.Workspace:GetDescendants()) do
+                if v.Name == "Coin" or v.Name == "CoinContainer" or v:FindFirstChild("CoinVisual") then
+                    if v:IsA("BasePart") or v:IsA("Model") then
+                        local pos = v:IsA("Model") and v:GetModelCFrame().Position or v.Position
+                        lp.Character.HumanoidRootPart.CFrame = CFrame.new(pos)
+                        task.wait(0.1) -- Pequena pausa para coletar
+                        break -- Foca em uma moeda por vez
+                    end
+                end
+            end
+        end
+    end
+end)
+
+-- ✅ LOOP DE NOCLIP E VELOCIDADE IGUAL AO SEU
+RunService.Stepped:Connect(function()
+    if lp.Character and lp.Character:FindFirstChild("Humanoid") then
+        if states.noclip then
+            for _, v in pairs(lp.Character:GetDescendants()) do
+                if v:IsA("BasePart") then v.CanCollide = false end
+            end
+        end
+        if states.speed then
+            lp.Character.Humanoid.WalkSpeed = 60
+        else
+            lp.Character.Humanoid.WalkSpeed = 16
+        end
+    end
+end)
+
+-- ✅ PULO INFINITO IGUAL AO SEU
+UIS.JumpRequest:Connect(function()
+    if states.infJump and lp.Character and lp.Character:FindFirstChild("Humanoid") then
+        lp.Character.Humanoid:ChangeState(Enum.HumanoidStateType.Jumping)
+    end
+end)
+
+print("✅ MM2 BRASIL BETA CARREGADO! 🗡️")
