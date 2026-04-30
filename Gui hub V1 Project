@@ -262,34 +262,113 @@ task.spawn(function()
                         lp.Character.HumanoidRootPart.CFrame = CFrame.new(pos)
                         task.wait(0.1) -- Pequena pausa para coletar
                         break -- Foca em uma moeda por vez
-                    end
-                end
-            end
-        end
-    end
-end)
+local Players = game:GetService("Players")
+local lp = Players.LocalPlayer
+local rs = game:GetService("RunService")
+local cam = workspace.CurrentCamera
 
--- ✅ LOOP DE NOCLIP E VELOCIDADE IGUAL AO SEU
-RunService.Stepped:Connect(function()
-    if lp.Character and lp.Character:FindFirstChild("Humanoid") then
-        if states.noclip then
-            for _, v in pairs(lp.Character:GetDescendants()) do
-                if v:IsA("BasePart") then v.CanCollide = false end
-            end
-        end
-        if states.speed then
-            lp.Character.Humanoid.WalkSpeed = 60
-        else
-            lp.Character.Humanoid.WalkSpeed = 16
-        end
-    end
-end)
+-- Limpeza
+if lp.PlayerGui:FindFirstChild("GuizinQ_Fix") then lp.PlayerGui.GuizinQ_Fix:Destroy() end
 
--- ✅ PULO INFINITO IGUAL AO SEU
-UIS.JumpRequest:Connect(function()
-    if states.infJump and lp.Character and lp.Character:FindFirstChild("Humanoid") then
-        lp.Character.Humanoid:ChangeState(Enum.HumanoidStateType.Jumping)
-    end
-end)
+local sg = Instance.new("ScreenGui", lp.PlayerGui)
+sg.Name = "GuizinQ_Fix"
+sg.ResetOnSpawn = false
 
-print("✅ MM2 BRASIL BETA CARREGADO! 🗡️")
+local cor_fundo = Color3.fromRGB(15, 15, 15)
+local cor_lateral = Color3.fromRGB(20, 20, 20)
+local cor_neon = Color3.fromRGB(255, 40, 40)
+
+-- Janela Principal (Tamanho Fixo para Celular)
+local main = Instance.new("Frame", sg)
+main.Size = UDim2.new(0, 500, 0, 300)
+main.Position = UDim2.new(0.5, -250, 0.5, -150)
+main.BackgroundColor3 = cor_fundo
+main.BorderSizePixel = 0
+main.Active = true
+main.Draggable = true
+Instance.new("UICorner", main).CornerRadius = UDim.new(0, 8)
+local borda = Instance.new("UIStroke", main)
+borda.Color = cor_neon
+borda.Thickness = 1.5
+
+-- Sidebar (Corrigida para ficar DENTRO do frame)
+local side = Instance.new("Frame", main)
+side.Size = UDim2.new(0, 130, 1, 0)
+side.BackgroundColor3 = cor_lateral
+side.BorderSizePixel = 0
+Instance.new("UICorner", side).CornerRadius = UDim.new(0, 8)
+
+local title = Instance.new("TextLabel", side)
+title.Size = UDim2.new(1, 0, 0, 40)
+title.Text = "GUIZINQ HUB"
+title.TextColor3 = cor_neon
+title.Font = Enum.Font.GothamBold
+title.TextSize = 14
+title.BackgroundTransparency = 1
+
+local btnContainer = Instance.new("Frame", side)
+btnContainer.Size = UDim2.new(1, 0, 1, -50)
+btnContainer.Position = UDim2.new(0, 0, 0, 45)
+btnContainer.BackgroundTransparency = 1
+local layout = Instance.new("UIListLayout", btnContainer)
+layout.HorizontalAlignment = Enum.HorizontalAlignment.Center
+layout.Padding = UDim.new(0, 5)
+
+-- Área de Conteúdo
+local content = Instance.new("Frame", main)
+content.Size = UDim2.new(1, -140, 1, -10)
+content.Position = UDim2.new(0, 135, 0, 5)
+content.BackgroundTransparency = 1
+
+local tabs = {}
+
+local function CriarTela(nome)
+    local f = Instance.new("ScrollingFrame", content)
+    f.Name = nome
+    f.Size = UDim2.new(1, 0, 1, 0)
+    f.BackgroundTransparency = 1
+    f.Visible = false
+    f.ScrollBarThickness = 0
+    Instance.new("UIListLayout", f).Padding = UDim.new(0, 8)
+    tabs[nome] = f
+    return f
+end
+
+local function AbrirAba(nome)
+    for _, t in pairs(tabs) do t.Visible = false end
+    if tabs[nome] then tabs[nome].Visible = true end
+end
+
+local function AddTabBtn(nome, display)
+    local b = Instance.new("TextButton", btnContainer)
+    b.Size = UDim2.new(0, 110, 0, 30)
+    b.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
+    b.Text = display
+    b.TextColor3 = Color3.new(0.7, 0.7, 0.7)
+    b.Font = Enum.Font.GothamSemibold
+    b.TextSize = 12
+    Instance.new("UICorner", b)
+    b.MouseButton1Click:Connect(function() AbrirAba(nome) end)
+end
+
+-- Setup
+AddTabBtn("HOME", "⌂ Home")
+AddTabBtn("PLAYER", "⚡ Jogador")
+AddTabBtn("ESP", "👁 Visuals")
+AddTabBtn("MISC", "⚙ Misc")
+
+local tHome = CriarTela("HOME")
+local tPlayer = CriarTela("PLAYER")
+CriarTela("ESP")
+CriarTela("MISC")
+
+-- Home Simples
+local w = Instance.new("TextLabel", tHome)
+w.Size = UDim2.new(1, -10, 0, 60)
+w.BackgroundColor3 = Color3.fromRGB(25, 25, 25)
+w.Text = "GuizinQ Hub v2.1\nAjustado para Celular"
+w.TextColor3 = Color3.new(1, 1, 1)
+w.Font = Enum.Font.GothamSemibold
+Instance.new("UICorner", w)
+
+AbrirAba("HOME")
