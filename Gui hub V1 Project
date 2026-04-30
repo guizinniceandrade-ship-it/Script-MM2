@@ -1,69 +1,174 @@
--- ===================================
---        MM2 BRASIL BETA 🗡️
---    SCRIPT COMPLETO COM AUTO FARM
--- ===================================
-
 local Players = game:GetService("Players")
-local UIS = game:GetService("UserInputService")
-local RunService = game:GetService("RunService")
 local lp = Players.LocalPlayer
+local rs = game:GetService("RunService")
+local cam = workspace.CurrentCamera
 
--- Limpeza de UI antiga
-if game.CoreGui:FindFirstChild("PainelDeltaV3") then
-    game.CoreGui.PainelDeltaV3:Destroy()
-end
+-- Limpeza para não bugar ao reexecutar
+if lp.PlayerGui:FindFirstChild("RedzReal") then lp.PlayerGui.RedzReal:Destroy() end
 
-local screenGui = Instance.new("ScreenGui")
-screenGui.Name = "PainelDeltaV3"
-screenGui.Parent = game.CoreGui
-screenGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
+local sg = Instance.new("ScreenGui", lp.PlayerGui)
+sg.Name = "RedzReal"
+sg.ResetOnSpawn = false
 
-local states = {
-    noclip = false,
-    esp = false,
-    infJump = false,
-    speed = false,
-    autoFarm = false
-}
-local distAura = 15
+local cor_fundo = Color3.fromRGB(20, 20, 20)
+local cor_lateral = Color3.fromRGB(15, 15, 15)
+local cor_neon = Color3.fromRGB(255, 40, 40)
 
--- ✅ Função só para deixar bonito, NÃO MEXE NO FUNCIONAMENTO
-local function round(obj, radius)
-    local c = Instance.new("UICorner")
-    c.CornerRadius = UDim.new(0, radius)
-    c.Parent = obj
-end
-
--- 🎨 JANELA PRINCIPAL - Visual melhorado, tamanho e função IGUAIS AO SEU
-local main = Instance.new("Frame")
-main.Size = UDim2.new(0, 220, 0, 300)
-main.Position = UDim2.new(0.5, -110, 0.5, -150)
-main.BackgroundColor3 = Color3.fromRGB(15, 15, 15) -- Fica mais escuro e bonito
-main.BackgroundTransparency = 0.1 -- Quase transparente como você gosta
-main.Draggable = true 
+-- Janela Principal
+local main = Instance.new("Frame", sg)
+main.Size = UDim2.new(0, 520, 0, 320)
+main.Position = UDim2.new(0.5, -260, 0.5, -160)
+main.BackgroundColor3 = cor_fundo
+main.BorderSizePixel = 0
 main.Active = true
-main.Parent = screenGui
-round(main, 12) -- Bordas arredondadas
+main.Draggable = true
+Instance.new("UICorner", main).CornerRadius = UDim.new(0, 10)
+local borda = Instance.new("UIStroke", main)
+borda.Color = cor_neon
+borda.Thickness = 1.5
 
--- 🎛️ BOTÃO DE ABRIR E FECHAR - Mesma função, só cor e aparência
-local toggleBtn = Instance.new("TextButton")
-toggleBtn.Size = UDim2.new(0, 80, 0, 30)
-toggleBtn.Position = UDim2.new(0, 10, 0, 10)
-toggleBtn.Text = "Fechar"
-toggleBtn.BackgroundColor3 = Color3.fromRGB(160, 30, 30) -- Vermelho mais bonito
-toggleBtn.TextColor3 = Color3.new(1, 1, 1)
-toggleBtn.Font = Enum.Font.GothamBold
-toggleBtn.TextSize = 13
-toggleBtn.AutoButtonColor = false
-toggleBtn.Parent = screenGui
-round(toggleBtn, 8)
+-- Sidebar
+local side = Instance.new("Frame", main)
+side.Size = UDim2.new(0, 140, 1, 0)
+side.BackgroundColor3 = cor_lateral
+Instance.new("UICorner", side).CornerRadius = UDim.new(0, 10)
 
--- ✅ ESSA FUNÇÃO É EXATAMENTE A SUA, NÃO ALTEREI NADA
-toggleBtn.MouseButton1Click:Connect(function()
-    main.Visible = not main.Visible
-    toggleBtn.Text = main.Visible and "Fechar" or "Abrir"
-    toggleBtn.BackgroundColor3 = main.Visible and Color3.fromRGB(160, 30, 30) or Color3.fromRGB(30, 160, 30)
+local title = Instance.new("TextLabel", side)
+title.Size = UDim2.new(1, 0, 0, 50)
+title.Text = "GUIZINQ HUB"
+title.TextColor3 = cor_neon
+title.Font = Enum.Font.GothamBold
+title.TextSize = 18
+title.BackgroundTransparency = 1
+
+local btnContainer = Instance.new("Frame", side)
+btnContainer.Size = UDim2.new(1, 0, 1, -60)
+btnContainer.Position = UDim2.new(0, 0, 0, 60)
+btnContainer.BackgroundTransparency = 1
+Instance.new("UIListLayout", btnContainer).HorizontalAlignment = Enum.HorizontalAlignment.Center
+
+-- Área de Conteúdo
+local content = Instance.new("Frame", main)
+content.Size = UDim2.new(1, -155, 1, -20)
+content.Position = UDim2.new(0, 150, 0, 10)
+content.BackgroundTransparency = 1
+
+local tabs = {}
+local espTable = {}
+
+local function CriarTela(nome)
+    local f = Instance.new("ScrollingFrame", content)
+    f.Name = nome
+    f.Size = UDim2.new(1, 0, 1, 0)
+    f.BackgroundTransparency = 1
+    f.Visible = false
+    f.ScrollBarThickness = 0
+    Instance.new("UIListLayout", f).Padding = UDim.new(0, 8)
+    tabs[nome] = f
+    return f
+end
+
+local function AbrirAba(nome)
+    for _, t in pairs(tabs) do t.Visible = false end
+    if tabs[nome] then tabs[nome].Visible = true end
+end
+
+-- Lógica do Fly (Voo)
+local flying = false
+local speedfly = 50
+local function toggleFly(v)
+    flying = v
+    local char = lp.Character
+    if not char or not char:FindFirstChild("HumanoidRootPart") then return end
+    if flying then
+        local bv = Instance.new("BodyVelocity", char.HumanoidRootPart)
+        bv.Name = "FlyVelocity"
+        bv.MaxForce = Vector3.new(math.huge, math.huge, math.huge)
+        local bg = Instance.new("BodyGyro", char.HumanoidRootPart)
+        bg.Name = "FlyGyro"
+        bg.MaxTorque = Vector3.new(math.huge, math.huge, math.huge)
+        task.spawn(function()
+            while flying do
+                rs.RenderStepped:Wait()
+                char.Humanoid.PlatformStand = true
+                bv.Velocity = char.Humanoid.MoveDirection * speedfly + Vector3.new(0, 0.1, 0)
+                bg.CFrame = cam.CFrame
+            end
+            char.Humanoid.PlatformStand = false
+            if char.HumanoidRootPart:FindFirstChild("FlyVelocity") then char.HumanoidRootPart.FlyVelocity:Destroy() end
+            if char.HumanoidRootPart:FindFirstChild("FlyGyro") then char.HumanoidRootPart.FlyGyro:Destroy() end
+        end)
+    end
+end
+
+-- Botões de Ligar/Desligar
+local function AddToggle(parent, texto, callback)
+    local f = Instance.new("TextButton", parent)
+    f.Size = UDim2.new(1, -10, 0, 35)
+    f.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
+    f.Text = "  [ " .. texto .. " ]"
+    f.TextColor3 = Color3.new(0.8, 0.8, 0.8)
+    f.TextXAlignment = Enum.TextXAlignment.Left
+    f.Font = Enum.Font.GothamSemibold
+    f.TextSize = 11
+    Instance.new("UICorner", f)
+    local status = Instance.new("TextLabel", f)
+    status.Size = UDim2.new(0, 60, 1, 0)
+    status.Position = UDim2.new(1, -65, 0, 0)
+    status.Text = "OFF"
+    status.TextColor3 = Color3.new(0.5, 0.5, 0.5)
+    status.BackgroundTransparency = 1
+    status.Font = Enum.Font.GothamBold
+    local ligado = false
+    f.MouseButton1Click:Connect(function()
+        ligado = not ligado
+        status.Text = ligado and "ON" or "OFF"
+        status.TextColor3 = ligado and cor_neon or Color3.new(0.5, 0.5, 0.5)
+        f.BackgroundColor3 = ligado and Color3.fromRGB(40, 30, 30) or Color3.fromRGB(30, 30, 30)
+        callback(ligado)
+    end)
+end
+
+local function AddTabBtn(nome, display)
+    local b = Instance.new("TextButton", btnContainer)
+    b.Size = UDim2.new(1, -20, 0, 35)
+    b.BackgroundColor3 = Color3.fromRGB(25, 25, 25)
+    b.Text = display
+    b.TextColor3 = Color3.new(0.6, 0.6, 0.6)
+    b.Font = Enum.Font.GothamSemibold
+    Instance.new("UICorner", b)
+    b.MouseButton1Click:Connect(function() AbrirAba(nome) end)
+end
+
+-- Telas
+AddTabBtn("HOME", "⌂ Home")
+AddTabBtn("PLAYER", "⚡ Player")
+AddTabBtn("ESP", "👁 Visuals")
+AddTabBtn("MISC", "⚙ Misc")
+
+local tHome = CriarTela("HOME")
+local tPlayer = CriarTela("PLAYER")
+local tEsp = CriarTela("ESP")
+local tMisc = CriarTela("MISC")
+
+-- Home
+local w = Instance.new("TextLabel", tHome)
+w.Size = UDim2.new(1, -10, 0, 80)
+w.BackgroundColor3 = Color3.fromRGB(25, 25, 25)
+w.Text = "GuizinQ Hub v2.1\nStatus: Online"
+w.TextColor3 = Color3.new(1,1,1)
+Instance.new("UICorner", w)
+
+-- Player
+AddToggle(tPlayer, "FLY", function(v) toggleFly(v) end)
+AddToggle(tPlayer, "WALKSPEED (60)", function(v) lp.Character.Humanoid.WalkSpeed = v and 60 or 16 end)
+
+-- Misc
+AddToggle(tMisc, "ANTI-AFK", function(v)
+    lp.Idled:Connect(function() if v then game:GetService("VirtualUser"):ClickButton2(Vector2.new()) end end)
 end)
+
+AbrirAba("HOME")
 
 -- ✅ ORGANIZAÇÃO DOS BOTÕES - IGUAL AO SEU
 local list = Instance.new("UIListLayout")
